@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Image, Pagination, Spinner, Table , Form} from "react-bootstrap";
+import { Image, Pagination, Spinner, Table, Form } from "react-bootstrap";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
 
 const Home = () => {
   const [books, setBooks] = useState([]);
@@ -10,6 +11,7 @@ const Home = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [genreFilter, setGenreFilter] = useState("All");
   const [genres, setGenres] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
   const searchTimeout = useRef(null);
   useEffect(() => {
     setLoading(true);
@@ -31,7 +33,6 @@ const Home = () => {
       .finally(() => setLoading(false));
   }, [currentPage]);
 
-
   useEffect(() => {
     if (searchTimeout.current) {
       clearTimeout(searchTimeout.current);
@@ -41,11 +42,13 @@ const Home = () => {
       let filtered = books.filter((book) =>
         book.title.toLowerCase().includes(searchQuery.toLowerCase())
       );
-      
+
       if (genreFilter !== "All") {
-        filtered = filtered.filter(book => book.subjects && book.subjects.includes(genreFilter));
+        filtered = filtered.filter(
+          (book) => book.subjects && book.subjects.includes(genreFilter)
+        );
       }
-      
+
       setFilteredBooks(filtered);
       setLoading(false);
     }, 300);
@@ -53,6 +56,22 @@ const Home = () => {
     return () => clearTimeout(searchTimeout.current);
   }, [searchQuery, books, genreFilter]);
 
+  useEffect(() => {
+    const savedWishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
+    setWishlist(savedWishlist);
+  }, []);
+
+
+  const toggleWishlist = (book) => {
+    let updatedWishlist;
+    if (wishlist.some((item)=> item.id === book.id)) {
+        updatedWishlist = wishlist.filter((item)=> item.id != book.id)
+    }else{
+        updatedWishlist = [...wishlist,book]
+    }
+    setWishlist(updatedWishlist);
+    localStorage.setItem('wishList',JSON.stringify(updatedWishlist))
+  };
 
   return (
     <div className="container mt-4">
@@ -94,6 +113,7 @@ const Home = () => {
                 <th>Author</th>
                 <th>Genre</th>
                 <th>ID</th>
+                <th>Wish List</th>
               </tr>
             </thead>
             <tbody>
@@ -119,6 +139,18 @@ const Home = () => {
                   </td>
                   <td>{book.subjects ? book.subjects.join(", ") : "N/A"}</td>
                   <td>{book.id}</td>
+                  <td>
+                    <span
+                      onClick={() => toggleWishlist(book)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {wishlist.some((item) => item.id === book.id) ? (
+                        <FaHeart color="red" />
+                      ) : (
+                        <FaRegHeart color="gray" />
+                      )}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>
