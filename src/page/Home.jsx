@@ -1,19 +1,23 @@
 import React, { useEffect, useState } from "react";
-import { Spinner, Table } from "react-bootstrap";
+import { Image, Pagination, Spinner, Table } from "react-bootstrap";
 
 const Home = () => {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(false);
-
+  const [currentPage, setCurrentPage] = useState(1);
+  console.log("currentPage", currentPage)
+  const [totalPages, setTotalPages] = useState(1);
   useEffect(() => {
     setLoading(true);
-    fetch(`https://gutendex.com/books`)
+    fetch(`https://gutendex.com/books/?page=${currentPage}`)
       .then((response) => response.json())
       .then((data) => {
+        console.log(data)
         setBooks(data.results);
+        setTotalPages(Math.ceil(data.count/10))
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [currentPage]);
   return (
     <div className="container mt-4">
       <h2>Book List</h2>
@@ -41,7 +45,7 @@ const Home = () => {
                   <tr key={book.id}>
                     <td>
                       {book.formats["image/jpeg"] ? (
-                        <img
+                        <Image
                           src={book.formats["image/jpeg"]}
                           alt={book.title}
                           thumbnail
@@ -63,6 +67,32 @@ const Home = () => {
                 ))}
               </tbody>
             </Table>
+
+            {/* Pagination */}
+            <Pagination className="justify-content-center">
+              <Pagination.Prev
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              />
+              {[...Array(totalPages).keys()]
+                .slice(
+                  Math.max(0, currentPage - 3),
+                  Math.min(totalPages, currentPage + 2)
+                )
+                .map((number) => (
+                  <Pagination.Item
+                    key={number + 1}
+                    active={number + 1 === currentPage}
+                    onClick={() => setCurrentPage(number + 1)}
+                  >
+                    {number + 1}
+                  </Pagination.Item>
+                ))}
+              <Pagination.Next
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              />
+            </Pagination>
             </>
         )
       }
